@@ -14,6 +14,11 @@ func main() {
 		log.Fatal("Failed to get DDNS_HOSTNAME from environment.")
 	}
 
+	zone := os.Getenv("DDNS_ZONE")
+	if zone == "" {
+		log.Fatal("Failed to get DDNS_ZONE from environment.")
+	}
+
 	ip := os.Getenv("DDNS_IP")
 	if ip == "" {
 		log.Fatal("Failed to get DDNS_IP from environment.")
@@ -31,18 +36,18 @@ func main() {
 
 	ctx := context.Background()
 
-	zone, err := api.ZoneIDByName("arfycat.com")
+	zoneID, err := api.ZoneIDByName(zone)
 	if err != nil {
 		log.Fatal("Failed to get Zone ID.  ", err)
 	}
 
-	zoneID := cloudflare.ZoneIdentifier(zone)
+	zoneRC := cloudflare.ZoneIdentifier(zoneID)
 
 	var listParams cloudflare.ListDNSRecordsParams
 	listParams.Type = "A"
 	listParams.Name = hostname
 
-	records, _, err := api.ListDNSRecords(ctx, zoneID, listParams)
+	records, _, err := api.ListDNSRecords(ctx, zoneRC, listParams)
 	if err != nil {
 		log.Fatal("Failed to list DNS records.  ", err)
 	}
@@ -61,7 +66,7 @@ func main() {
 	updateParams.Name = record.Name
 	updateParams.Content = ip
 
-	_, err = api.UpdateDNSRecord(ctx, zoneID, updateParams)
+	_, err = api.UpdateDNSRecord(ctx, zoneRC, updateParams)
 	if err != nil {
 		log.Fatal("Failed to update DNS record.  ", err)
 	}
